@@ -293,9 +293,9 @@ function createExtraInfo() {
 
 function showPageImages() {
     $('#activity_title_image').css({
-        "background" : "url(" + activity_title_image + ") repeat-x",
+        "background" : "url(" + activity_title_image + ") no-repeat center",
         "background-size" : "auto 100%",
-        "height" : "100px",
+        "height" : "100px"
         // "background-position" : "center"
     });
 
