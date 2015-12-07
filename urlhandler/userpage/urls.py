@@ -12,7 +12,8 @@ urlpatterns = patterns('',
                        url(r'^helplecture/$','userpage.views.helplecture_view'),
                        url(r'^activity/(?P<actid>\d+)/menu/$', 'userpage.views.activity_menu_view'),
                        
-                       url(r'^vote_main/(?P<voteid>\d+)/(?P<openid>\S+)/(?P<typeid>\d+)/$', 'userpage.views.vote_main_view'),
+                       url(r'^vote_main/(?P<voteid>\d+)/(?P<typeid>\d+)/$', 'userpage.views.vote_main_view'),
                        url(r'^vote_user_post/(?P<voteid>\d+)/(?P<openid>\S+)/$', 'userpage.views.vote_user_post'),
                        url(r'^vote_item_detail/(?P<itemid>\d+)/$', 'userpage.views.vote_item_detail'),
+                       url(r'^check_open_id/(.+)/(.+)/$', 'userpage.views.check_open_id'),
                        )

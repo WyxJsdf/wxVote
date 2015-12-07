@@ -14,7 +14,8 @@ from queryhandler.handler_check_templates import *
 from queryhandler.weixin_msg import *
 from weixinlib.settings import WEIXIN_EVENT_KEYS
 
-from weixinlib.settings import WEIXIN_TOKEN
+from urllib import quote
+from weixinlib.settings import WEIXIN_TOKEN, WEIXIN_APPID
 from weixinlib import http_get
 
 def get_user(openid):
@@ -437,7 +438,7 @@ def response_vote_event(msg):
             title = '投票:' + vote.name,
             description = get_text_vote_description(vote),
             pic_url = vote.pic_url,
-            url = s_reverse_vote_mainpage(vote.id, fromuser, 0)
+            url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WEIXIN_APPID+ '&redirect_uri=' + quote(s_reverse_vote_mainpage(vote.id, 0)) +'&response_type=code&scope=snsapi_base#wechat_redirect'
         ))
 
     items = []
@@ -447,7 +448,7 @@ def response_vote_event(msg):
             title = '投票:' + vote.name,
             description = get_text_vote_description(vote),
             pic_url = vote.pic_url,
-            url = s_reverse_vote_mainpage(vote.id, fromuser, 0)
+            url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WEIXIN_APPID+ '&redirect_uri=' + quote(s_reverse_vote_mainpage(vote.id, 0)) +'&response_type=code&scope=snsapi_base#wechat_redirect'
         ))
         if (len(items) >= 10):
             break
@@ -495,5 +496,5 @@ def response_program_list(msg):
         title = '2015清华大学新年晚会节目单',
         description = '2015清华大学新年晚会节目单',
         pic_url = vote.pic_url,
-        url = s_reverse_vote_mainpage(vote.id, fromuser, 1)
+            url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WEIXIN_APPID+ '&redirect_uri=' + quote(s_reverse_vote_mainpage(vote.id, 1)) +'&response_type=code&scope=snsapi_base#wechat_redirect'
     ))
