@@ -37,6 +37,7 @@ var dateInterfaceMap = {
     'pic_url': 'value',
     'max_num' : 'value',
     'background' : 'value',
+    'vote_type' : 'value',
     'layout_style' : 'value',
     'has_images' : 'value'
 }, lockMap = {
