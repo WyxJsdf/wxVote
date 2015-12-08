@@ -18,6 +18,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from weixinlib import http_get
 
+from urllib import quote
 from weixinlib.base_support import get_access_token
 from urlhandler.models import Vote, VoteItem, SingleVote
 from django.http import HttpResponseRedirect
@@ -25,7 +26,6 @@ from django.forms.models import model_to_dict
 from weixinlib.settings import WEIXIN_APPID, WEIXIN_SECRET
 from django.db.models import F
 
-allCode = {}
 def home(request):
     return render_to_response('mobile_base.html')
 
@@ -220,19 +220,12 @@ def vote_main_view(request, voteid, typeid):
     voteDict['layout_style'] = vote.layout_style
     voteDict['has_images'] = vote.has_images
     voteDict['vote_type'] = vote.vote_type
-    global allCode
-    print(allCode)
-    # openid = 'oa7m1tzv94qO_dTqNXfrV95On04M'
-    if (code in allCode):
-        openid = allCode[code]
-    else:
-        while True:
-            getOpenidStr = http_get('https://api.weixin.qq.com/sns/oauth2/access_token?appid=' + WEIXIN_APPID + '&secret=' + WEIXIN_SECRET + '&code=' + code + '&grant_type=authorization_code')
-            getOpenid = json.loads(getOpenidStr)
-            if 'openid' in getOpenid:
-                break
+    getOpenidStr = http_get('https://api.weixin.qq.com/sns/oauth2/access_token?appid=' + WEIXIN_APPID + '&secret=' + WEIXIN_SECRET + '&code=' + code + '&grant_type=authorization_code')
+    getOpenid = json.loads(getOpenidStr)
+    if 'openid' in getOpenid:
         openid = getOpenid['openid']
-        allCode[code] = openid
+    else:
+        return HttpResponseRedirect('https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WEIXIN_APPID+ '&redirect_uri=' + quote(s_reverse_vote_mainpage(voteid, typeid)) +'&response_type=code&scope=snsapi_base#wechat_redirect')
     stuNum = get_user_vote(openid)
     if stuNum == "-1":
         is_validate = 0
