@@ -271,7 +271,7 @@ function modifyStyle() {
 }
 
 function createVoteItem() {
-    for (var i = 0; i < vote_items.length; i++) {
+    for (var i = vote_items - 1; i >= 0; i--) {
         var item = vote_items[i];
         var box;
         if (layout_style == 0) {
