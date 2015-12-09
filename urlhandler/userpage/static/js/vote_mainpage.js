@@ -105,9 +105,9 @@ function addImg() {
 function addVoteNumber() {
     for (var i = 0; i < vote_items.length; i++) {
         if (layout_style == 0) {
-            $($('.item-vote')[i]).html('人气：' + vote_items[i].vote_num);
+            $($('.item-vote')[i]).html('人气：' + vote_items[vote_items.length - i - 1].vote_num);
         } else if (layout_style == 1) {
-            $($('.item-vote-grid')[i]).html('人气：' + vote_items[i].vote_num);
+            $($('.item-vote-grid')[i]).html('人气：' + vote_items[vote_items.length - i - 1].vote_num);
         }
     }
 }
