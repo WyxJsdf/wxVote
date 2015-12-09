@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from queryhandler.settings import SITE_DOMAIN, SITE_NOTPORT, INFORMATION_SITE_DOMAIN
+from queryhandler.settings import SITE_DOMAIN, SITE_NOTPORT
 
 
 def s_reverse_validate(openid):
@@ -23,5 +23,13 @@ def s_reverse_activity_menu(actid):
 
 
 def s_reverse_vote_mainpage(voteid, typeid):
-	return INFORMATION_SITE_DOMAIN + reverse('userpage.views.vote_main_view', kwargs={'voteid': voteid, 'typeid': typeid})
+	url = reverse('userpage.views.vote_main_view', kwargs={'voteid': voteid, 'typeid': typeid})
+	return SITE_DOMAIN + url
 
+def s_reverse_vote_main_set_openid(voteid, openid, typeid):
+	url = reverse('userpage.views.vote_main_view', kwargs={'voteid': voteid, 'typeid': typeid})
+	return SITE_DOMAIN + reverse('userpage.views.set_session', kwargs={'openid': openid, 'url': url})
+
+def s_reverse_vote_main_in_menu(voteid, openid, typeid):
+	url = reverse('userpage.views.vote_main_view', kwargs={'voteid': voteid, 'typeid': typeid})
+	return SITE_DOMAIN + url

@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 
-from django.http import HttpResponse, Http404
+from django.http.response import HttpResponse, Http404, HttpResponseForbidden
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from urlhandler.models import User, Activity, Ticket
@@ -8,20 +8,18 @@ from urlhandler.settings import STATIC_URL
 import urllib, urllib2
 import datetime
 from django.utils import timezone
-from userpage.safe_reverse import s_reverse_vote_mainpage, s_reverse_validate
-from urllib import quote
+
 from queryhandler.tickethandler import get_user_vote
+from queryhandler.settings import SITE_DOMAIN
 
 from userpage.safe_reverse import *
 from weixinlib.settings import WEIXIN_TOKEN
 import json
 from django.views.decorators.csrf import csrf_exempt
-from weixinlib import http_get
 
-from urllib import quote
 from weixinlib.base_support import get_access_token
 from urlhandler.models import Vote, VoteItem, SingleVote
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.forms.models import model_to_dict
 from weixinlib.settings import WEIXIN_APPID, WEIXIN_SECRET
 from django.db.models import F
@@ -202,8 +200,42 @@ def helplecture_view(request):
 
 
 ################################## Voting #################################
+import urllib2
+from django.utils.http import urlquote
+
+WEIXIN_OAUTH_REDIRECT = "http://student.tsinghua.edu.cn/api/user/wx/oauth"
+
 def vote_main_view(request, voteid, typeid):
-    code = request.GET.get('code')
+    stu_id = request.session.get("stu_id", "")
+    openid = request.session.get("openid", "")
+    
+    call_oauth = False
+    if not openid:
+        agent = request.META.get('HTTP_USER_AGENT', "")
+        if "MicroMessenger" in agent:
+            call_oauth = True
+    if call_oauth:
+        success_url = s_reverse_vote_main_set_openid(voteid, "OPENID", typeid)
+        url = "%s://%s?appid=%s&redirect_uri=%s&%s" % (
+            "https", "open.weixin.qq.com/connect/oauth2/authorize",
+            WEIXIN_APPID, urlquote("%s/url=%s" % (
+                WEIXIN_OAUTH_REDIRECT, urlquote(urlquote(success_url, ''), ''),
+            ), ''),
+            "response_type=code&scope=snsapi_base#wechat_redirect",
+        )
+        return HttpResponseRedirect(url)
+
+    if openid:
+        new_stu_id = ""
+        try:
+            new_stu_id = get_user_vote(openid) if openid else ""
+            if new_stu_id == "-1":
+                new_stu_id = ""
+        except:
+            pass
+        if new_stu_id != stu_id:
+            request.session["stu_id"] = stu_id = new_stu_id
+
     vote = Vote.objects.get(id=voteid)
     voteDict = {}
     voteDict['id'] = voteid
@@ -220,17 +252,7 @@ def vote_main_view(request, voteid, typeid):
     voteDict['layout_style'] = vote.layout_style
     voteDict['has_images'] = vote.has_images
     voteDict['vote_type'] = vote.vote_type
-    getOpenidStr = http_get('https://api.weixin.qq.com/sns/oauth2/access_token?appid=' + WEIXIN_APPID + '&secret=' + WEIXIN_SECRET + '&code=' + code + '&grant_type=authorization_code')
-    getOpenid = json.loads(getOpenidStr)
-    if 'openid' in getOpenid:
-        openid = getOpenid['openid']
-    else:
-        return HttpResponseRedirect('https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + WEIXIN_APPID+ '&redirect_uri=' + quote(s_reverse_vote_mainpage(voteid, typeid)) +'&response_type=code&scope=snsapi_base#wechat_redirect')
-    stuNum = get_user_vote(openid)
-    if stuNum == "-1":
-        is_validate = 0
-    else:
-        is_validate = 1
+
     now = datetime.datetime.now()
     if (now > vote.start_time):
         voteDict['started'] = 1
@@ -251,60 +273,69 @@ def vote_main_view(request, voteid, typeid):
         itemDict['vote_num'] = int(item.vote_num)
         itemDict['id'] = int(item.id)
         itemDict['voted'] = 0
-        if vote.vote_type == 0:
-            singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=itemDict['id'])
+        if not stu_id:
+            exist = False
+        elif vote.vote_type == 0:
+            singleVotes = SingleVote.objects.filter(stu_id=stu_id, item_id=itemDict['id'])
+            exist = singleVotes.exists()
         else:
-            singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=itemDict['id'], time__year=now.year, time__month=now.month, time__day=now.day)
-        if singleVotes.exists():
+            singleVotes = SingleVote.objects.filter(stu_id=stu_id, item_id=itemDict['id'], time__year=now.year, time__month=now.month, time__day=now.day)
+            exist = singleVotes.exists()
+        if exist:
             itemDict['voted'] = 1
             voteDict['voted'] = 1
         voteDict['items'].append(itemDict)
+    is_validate = 1 if stu_id else 0
+    # request.session["voted_" + str(voteid)] = voteDict['voted']
     return render_to_response('vote_mainpage.html', {
         'is_validate': is_validate,
         'validate_url': s_reverse_validate(openid),
         'vote': voteDict,
+        'stu_id': stu_id,
         'openid': openid,
         'typeid': typeid
     }, context_instance=RequestContext(request))
 
-def check_open_id(request, voteid, openid):
-    print("hahahahahaha")
-    # if not request.POST:
-    #     raise Http404
-    res = {}
-    stuNum = get_user_vote(openid)
-    if stuNum == "-1":
-        res['is_validate'] = 0
-    else:
-        res['is_validate'] = 1
-    res['voted'] = 0
-    res['items'] = []
-    now = datetime.datetime.now()
-    vote = Vote.objects.get(id=voteid)
-    voteItems = VoteItem.objects.filter(vote_key=vote.key, status__gte=0)
-    for item in  voteItems:
-        itemDict = {}
-        itemDict['name'] = item.name
-        itemDict['vote_num'] = int(item.vote_num)
-        itemDict['id'] = int(item.id)
-        itemDict['voted'] = 0
-        if vote.vote_type == 0:
-            singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=itemDict['id'])
-        else:
-            singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=itemDict['id'], time__year=now.year, time__month=now.month, time__day=now.day)
-        if singleVotes.exists():
-            itemDict['voted'] = 1
-            res['voted'] = 1
-        res['items'].append(itemDict)
-    print(res)
-    return HttpResponse(json.dumps(res), content_type='application/json')
+def vote_main_redirect_old(request, voteid, openid, typeid):
+    url = s_reverse_vote_mainpage(voteid, typeid)
+    return HttpResponsePermanentRedirect(url)
+
+def set_session(request, openid, url):
+    code = request.GET.get("code", "")
+    if code and openid.upper() == "OPENID":
+        _url = "%s://%s?appid=%s&secret=%s&code=%s&%s" % (
+            "https", "api.weixin.qq.com/sns/oauth2/access_token",
+            WEIXIN_APPID, WEIXIN_SECRET, code, "grant_type=authorization_code"
+        )
+        try:
+            _r = urllib2.urlopen(_url)
+            _body = _r.read()
+            openid = json.loads(_body)['openid']
+        except:
+            pass
+    request.session["openid"] = openid
+    if not url or url[0] != "/":
+        url = "/u/" + (url if url else "help")
+    return HttpResponseRedirect(SITE_DOMAIN + url)
+
+def clean_session(request, url):
+    request.session["openid"] = ""
+    request.session["stu_id"] = ""
+    if not url or url[0] != "/":
+        url = "/u/" + (url if url else "help")
+    return HttpResponseRedirect(SITE_DOMAIN + url)
 
 @csrf_exempt
-def vote_user_post(request, voteid, openid):
+def vote_post(request, voteid):
     if not request.POST:
         raise Http404
 
     post = request.POST
+    stu_id = request.session.get("stu_id", "")
+    if not stu_id:
+        return HttpResponseForbidden(json.dumps({
+            "error": "没有绑定学号！"
+        }), content_type='application/json')
     rtnJSON = {}
 
     try:
@@ -317,13 +348,13 @@ def vote_user_post(request, voteid, openid):
 
         if vote.vote_type == 0:
             for item in voteItems:
-                singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=item.id)
+                singleVotes = SingleVote.objects.filter(stu_id=stu_id, item_id=item.id)
                 if singleVotes.exists():
                     rtnJSON['error'] = u'你已经投过票啦！'
                     return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
         elif vote.vote_type == 1:
             for item in voteItems:
-                singleVotes = SingleVote.objects.filter(stu_id=openid, item_id=item.id, time__year=now.year, time__month=now.month, time__day=now.day)
+                singleVotes = SingleVote.objects.filter(stu_id=stu_id, item_id=item.id, time__year=now.year, time__month=now.month, time__day=now.day)
                 if singleVotes.exists():
                     rtnJSON['error'] = u'你已经投过票啦！'
                     return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
@@ -339,7 +370,7 @@ def vote_user_post(request, voteid, openid):
                 count = count + 1
                 preVote = {}
                 preVote['item_id'] = item.id
-                preVote['stu_id'] = openid
+                preVote['stu_id'] = stu_id
                 preVote['time'] = now
                 preVote['status'] = 1
                 SingleVote.objects.create(**preVote)
@@ -352,8 +383,6 @@ def vote_user_post(request, voteid, openid):
     except Exception as e:
         print 'Error occured!!!!!' + str(e)
         rtnJSON['error'] = str(e)
-        return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
-
     return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
 
 
