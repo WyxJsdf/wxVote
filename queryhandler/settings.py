@@ -6,6 +6,7 @@ SITE_NOTPORT = 'http://166.111.80.30'
 SITE_DOMAIN = SITE_NOTPORT + ':4606'
 SITE_HTTP_PROTOCOL = 'http'
 
+SITE_TICKET = 'http://127.0.0.1:4600'
 
 INFORMATION_SITE_DOMAIN = 'http://tuantuan.ssast.org'
 

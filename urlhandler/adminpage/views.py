@@ -824,6 +824,7 @@ def upload_pic(request):
             filename = request.FILES['upfile']
         else:
             filename = ''
+        optionIndex = request.POST.get('optionIndex', '')
         if filename:
             try:
                 img = Image.open(filename)
@@ -835,11 +836,53 @@ def upload_pic(request):
                 img.thumbnail((200, (h * 200 / w), Image.ANTIALIAS))
             else:
                 img.thumbnail((w * 200 / h, 200), Image.ANTIALIAS)
-            img.save("urlhandler/userpage/static/img/" + filename.__str__(), img.format)
-            rtnJSON['responseText'] = SITE_DOMAIN + "/static1/img/" + filename.__str__()
+            name = filename.__str__()
+            index = name.find('.')
+            name = name[:index] + str(optionIndex) + name[index:]
+            img.save("urlhandler/userpage/static/img/" + name, img.format)
+            rtnJSON['responseText'] = SITE_DOMAIN + "/static1/img/" + name
             return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
         else:
             rtnJSON['responseText'] = u'图片名为空'
+            return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
+    except Exception as e:
+        print str(e)
+        rtnJSON['responseText'] = str(e)
+        return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
+
+
+def modify_pic(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect(s_reverse_admin_home())
+
+    if not request.POST:
+        raise Http404
+
+    rtnJSON = {}
+    try:
+        x1 = request.POST.get('x1', '')
+        y1 = request.POST.get('y1', '')
+        x2 = request.POST.get('x2', '')
+        y2 = request.POST.get('y2', '')
+        w = request.POST.get('w', '')
+        h = request.POST.get('h', '')
+        filename = request.POST.get('picfilename', '')
+        if filename and x1 and x2 and y1 and y2 and w and h:
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
+            try:
+                img = Image.open("urlhandler/userpage/static/img/" + filename)
+            except Exception as e:
+                rtnJSON['responseText'] = u'打开图片失败！'
+                return HttpResponse(json.dump(rtnJSON), content_type='application/json')
+            box = (x1, y1, x2, y2)
+            img.crop(box).save("urlhandler/userpage/static/img/" + filename.__str__(), img.format)
+            rtnJSON['responseText'] = SITE_DOMAIN + "/static1/img/" + filename.__str__()
+            return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
+        else:
+            rtnJSON['responseText'] = u'未获取到图片信息！'
             return HttpResponse(json.dumps(rtnJSON), content_type='application/json')
     except Exception as e:
         print str(e)
