@@ -475,9 +475,24 @@ function addchoice() {
         vote_choice_count.toString()+
         '" class="form-control" row="3" placeholder="投票项的简介，如 来源：学生艺术团"></textarea></div></div><div class="form-group"><label for="input-item_pic_url" class="col-sm-2 control-label">投票项图片</label><div class="col-sm-10"><input type="url" name="pic_url'+
         vote_choice_count.toString()+
-        '" class="form-control" placeholder="投票项配图链接，如不需要，填写任意网址即可"></div></div></div></details>').insertBefore("#bottom_button");
+        '" class="form-control" id="input-pic_url_' +
+        vote_choice_count.toString()+
+        '" placeholder="投票项配图链接，如不需要，填写任意网址即可"><button type="button" class="btn btn-info" style = "width:17%;float:right;" id="input-uploadPic_' +
+        vote_choice_count.toString()+
+        '">从本地上传图片</button><button type="button" class="btn btn-info" style="width: 17%;float: right;display: none;" id="modify-pic_' +
+        vote_choice_count.toString()+
+        '" >截取图片</button></div></div></div></details>').insertBefore("#bottom_button");
+    $("#input-uploadPic_" + vote_choice_count).click(function(){
+        showUploader();
+        currentBtn = vote_choice_count;
+        $("#optionIndex").val(vote_choice_count);
+    });
+    $("#modify-pic_" + vote_choice_count).click(function () {
+        currentBtn = vote_choice_count;
+        showModify();
+    });
     renderBtn();
-};
+}
 
 function renderBtn (){
     $('.vote_delete').click(function(){

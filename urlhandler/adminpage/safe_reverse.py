@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from queryhandler.settings import SITE_DOMAIN, SITE_NOTPORT
+from queryhandler.settings import SITE_DOMAIN
 
 def s_reverse_admin_home():
     return SITE_DOMAIN + reverse('adminpage.views.home')
