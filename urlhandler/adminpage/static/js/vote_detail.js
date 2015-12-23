@@ -4,6 +4,7 @@
  * Date: 14-12-23
  * Time: 下午23:06
  */
+var voteStyle = 0;
 var dateInterfaceMap = {
     'year': 'getFullYear',
     'month': 'getMonth',
@@ -491,6 +492,12 @@ function addchoice() {
         currentBtn = vote_choice_count;
         showModify();
     });
+    if(voteStyle == 1) {
+        var curDom = $($(".vote_choice")[vote_choice_count - 1]).children("div");
+        var len = curDom.children().length;
+        $(curDom.children()[len - 1]).hide();
+        $(curDom.children()[len - 2]).hide();
+    }
     renderBtn();
 }
 
@@ -690,3 +697,29 @@ function sort(arr){
         return arr;
     }
 }
+
+$("#input-vote_style").change(function () {
+    voteStyle = $("#input-vote_style").val();
+    var numDom = $(".vote_choice").length;
+    var curDom;
+    var len = $($(".vote_choice")[0]).children("div").children().length;
+    var i;
+    if (voteStyle == 0) {
+        for(i = 0; i < numDom; i++) {
+            curDom = $($(".vote_choice")[i]).children("div");
+            $(curDom.children()[len - 1]).show();
+            $(curDom.children()[len - 2]).show();
+        }
+        $("#divLayout").show();
+        $("#divHasImage").show();
+    } else if (voteStyle == 1) {
+        for(i = 0; i < numDom; i++) {
+            curDom = $($(".vote_choice")[i]).children("div");
+            $(curDom.children()[len - 1]).hide();
+            $(curDom.children()[len - 2]).hide();
+        }
+        $("#divLayout").hide();
+        $("#divHasImage").hide();
+    }
+});
+
