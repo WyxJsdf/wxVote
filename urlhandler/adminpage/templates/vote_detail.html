@@ -9,6 +9,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="{% static "css/vote_detail.css" %}"/>
+    <link rel="stylesheet" href="{% static "css/jquery.Jcrop.css" %}" />
 {% endblock %}
 
 {% block js %}
@@ -57,6 +58,8 @@
     </script>
     <script src="{% static "js/vote_detail.js" %}"></script>
     <script src="{% static "js/upload_pic.js" %}"></script>
+    <script src="{% static "js/jquery.Jcrop.js" %}"></script>
+{#    <script src="{% static "js/jquery.min.js" %}"></script>#}
 {% endblock %}
 
 {% block vote-list-active %}{% endblock %}
@@ -102,8 +105,9 @@
             <div class="form-group">
                 <label for="input-pic_url" class="col-sm-2 control-label" min="0">投票配图</label>
                 <div class="col-sm-10">
-                    <input type="url" name="pic_url" class="form-control" id="input-pic_url" min="0" placeholder="活动配图链接，如不需要，填写任意网址即可">
-                    <button type="button" class="btn btn-info" style = "width:17%;float:right;" id="input-uploadPic">从本地上传图片</button>
+                    <input type="url" name="pic_url" class="form-control" id="input-pic_url_0" min="0" placeholder="活动配图链接，如不需要，填写任意网址即可">
+                    <button type="button" class="btn btn-info" style = "width:17%;float:right;" id="input-uploadPic_0">从本地上传图片</button>
+                    <button type="button" class="btn btn-info" style="width: 17%;float: right;display: none;" id="modify-pic_0" >截取图片</button>
                 </div>
             </div>
 
@@ -270,7 +274,6 @@
                         </div>
                     </div>
 
-
                     <div class="form-group">
                         <label for="input-item_description" class="col-sm-2 control-label">投票项详情</label>
                         <div class="col-sm-10">
@@ -281,7 +284,9 @@
                     <div class="form-group">
                         <label for="input-item_pic_url" class="col-sm-2 control-label">投票项图片</label>
                         <div class="col-sm-10">
-                            <input type="url" name="pic_url1" class="form-control" placeholder="投票项配图链接，如不需要，填写任意网址即可">
+                            <input type="url" name="pic_url1" class="form-control" id="input-pic_url_1" placeholder="投票项配图链接，如不需要，填写任意网址即可">
+                            <button type="button" class="btn btn-info" style = "width:17%;float:right;" id="input-uploadPic_1">从本地上传图片</button>
+                            <button type="button" class="btn btn-info" style="width: 17%;float: right;display: none;" id="modify-pic_1" >截取图片</button>
                         </div>
                     </div>
                 </div>
@@ -352,9 +357,32 @@
                     请保证图片文件小于1MB，上传后活动配图将被自动填写，如需保留请勿改动。
                 </div>
                 <input type="file" name="upfile" id="upfile" style="position:absolute;top:100px;left:60px" />
+                <input type="text" name="optionIndex" id="optionIndex" style="display: none;">
                 <button id="upload_pic_btn" type="submit" class="btn btn-default" style="position:absolute;width:80px;height:40px;bottom:20px;right:60px">上传</button>
                 <div id="errCosntent" style="position:absolute;align:right;height:40px;top:149px;right:155px;color:#FF0000">
 
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="mglobalCover" style="position:fixed;width:100%;height:100%;left:0px;top:0px;z-index:100;visibility:hidden;">
+        <div id="malphaCover" class="transformer" style="position:absolute;width:100%;height:100%;left:0px;top:0px;background-color:black;opacity:0.3"></div>
+        <div id="mwindowCover" class="transformer shadowBlue" style="position:relative;margin:0 auto;width: 500px;height: 200px;top:10%;background-color:white;border-radius:3px;">
+            <form action="{% url "adminpage.views.modify_pic" %}" method="post" id="mfileUploader"
+                  class="coords" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div style="position: absolute;bottom: 60px;">
+                <label>X1 <input type="text" size="4" id="x1" name="x1" /></label>
+                <label>Y1 <input type="text" size="4" id="y1" name="y1" /></label>
+                <label>X2 <input type="text" size="4" id="x2" name="x2" /></label>
+                <label>Y2 <input type="text" size="4" id="y2" name="y2" /></label>
+                <label>W <input type="text" size="4" id="w" name="w" /></label>
+                <label>H <input type="text" size="4" id="h" name="h" /></label>
+                <label>文件名<input type="text" name="picfilename" id="picfilename" value=""/></label>
+                </div>
+                <button id="modify_pic_btn" type="submit" class="btn btn-warning" style="position:absolute;width:80px;height:40px;bottom:20px;right:60px">保存</button>
+                <div id="merrCosntent" style="position:absolute;align:right;height:40px;bottom: 20px;right:155px;color:#FF0000">
                 </div>
             </form>
         </div>
