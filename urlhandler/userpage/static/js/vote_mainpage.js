@@ -1,33 +1,15 @@
 var lastSelect;
 
-window.onload = function(){
-        $.ajax({
-        type: 'GET',
-        // url: "{%url 'userpage.views.check_open_id' openid%}",
-        url: "/u/check_open_id/" + voteId + '/' + openid,
-        success: function(msg){
-            is_validate = msg['is_validate'];
-            if (voted == 0 && msg['voted'] == 1){
-                    $("button").remove();
-                    $('#itemList').html('');
-                    voted = msg['voted'];
-                    for (var i = 0; i < vote_items.length; i++)
-                        vote_items[i].vote_num = msg['items'][i]['vote_num'];
-                    onCreate_voted();
-            }
-        },
-        error: function(){
-            }
-    });
-}
-
 function commitVote() {
     if (is_validate == 0){
-        var conf_stu = confirm('您的账户尚未绑定学号，绑定学号方可投票，您确定前往绑定吗？');
+        if (!openid) {
+          alert('非常抱歉！\n非微信环境下无法获取您的身份，\n请在微信内访问投票页面。');
+          return false;
+        }
+        var conf_stu = confirm('您尚未绑定学号，绑定学号方可投票，您确定前往绑定吗？');
         if (conf_stu == false)
             return false;
         location.href = validate_url;
-//        location.reload(true);
         return false;
     }
     var name_list = generateVoteNames();
@@ -65,10 +47,17 @@ function generateOptions() {
             } else {
                 alert(data.error);
             }
+            window.location.hash = "#voted";
         },
         error: function (xhr) {
             console.log(xhr);
-            alert("很抱歉，好像发生了奇怪的错误= =");
+            var str = xhr && (typeof xhr == "object") && xhr.error;
+            if (str && str.length > 32) {
+              str = str.substr(0, 28) + "...";
+            } else {
+              str = "";
+            }
+            alert("很抱歉，好像发生了错误= =\n" + str);
         }
     };
     return options;
@@ -271,7 +260,9 @@ function modifyStyle() {
 }
 
 function createVoteItem() {
+
     for (var i = vote_items - 1; i >= 0; i--) {
+
         var item = vote_items[i];
         var box;
         if (layout_style == 0) {
@@ -318,7 +309,8 @@ function onCreate_unvoted() {
 
 function onCreate_voted() {
     var str = vote_type == 1 ? "今天" : "";
-    $("#info")[0].innerHTML = "您" + str +"已经投过票啦，感谢您的参与"
+    $("#info")[0].innerHTML = !is_validate ? "您未绑定账号，请在微信内访问投票页面"
+      : "您" + str +"已经投过票啦，感谢您的参与"
     $("button").remove();
     createBasicVoteItem();
     addVoteNumber();
@@ -422,7 +414,7 @@ function onCreate(){
         onCreate_unstarted();
     } else if(ended == 1) {
         onCreate_ended();
-    } else if(voted == 0) {
+    } else if(voted == 0 && is_validate) {
         onCreate_unvoted();
     } else {
         onCreate_voted();
@@ -432,62 +424,10 @@ function onCreate(){
 
     addEvent();
 }
-
+if (window.location.hash == "#voted") {
+  window.location.href = window.location.href.substr(0
+    , Math.max(window.location.href.indexOf("#"), 0)
+  );
+}
 onCreate();
-
-
-
-// 初始化WeixinApi，等待分享
-// WeixinApi.ready(function(Api) {
-
-//     // 微信分享的数据
-//     var wxData = {
-//         "appId": "wxa04c8f42f836340b", // 服务号可以填写appId
-//         "imgUrl" : vote_pic_url,
-//         "link" : 'http://mp.weixin.qq.com/s?__biz=MzA5MjEzOTQwNA==&mid=202215525&idx=1&sn=3a549a27e1d2847776db3e2a40f967cc#rd',
-//         "desc" : vote_description,
-//         "title" : vote_name
-//     };
-
-//     // 分享的回调
-//     var wxCallbacks = {
-//         // 收藏操作不执行回调，默认是开启(true)的
-//         favorite : false,
-
-//         // 分享操作开始之前
-//         ready : function() {
-//             // 你可以在这里对分享的数据进行重组
-//         },
-//         // 分享被用户自动取消
-//         cancel : function(resp) {
-//             // 你可以在你的页面上给用户一个小Tip，为什么要取消呢？
-//         },
-//         // 分享失败了
-//         fail : function(resp) {
-//             // 分享失败了，是不是可以告诉用户：不要紧，可能是网络问题，一会儿再试试？
-//             alert("分享失败，msg=" + resp.err_msg);
-//         },
-//         // 分享成功
-//         confirm : function(resp) {
-//             // 分享成功了，我们是不是可以做一些分享统计呢？
-//         },
-//         // 整个分享过程结束
-//         all : function(resp,shareTo) {
-//             // 如果你做的是一个鼓励用户进行分享的产品，在这里是不是可以给用户一些反馈了？
-//         }
-//     };
-
-//     // 用户点开右上角popup菜单后，点击分享给好友，会执行下面这个代码
-//     Api.shareToFriend(wxData, wxCallbacks);
-
-//     // 点击分享到朋友圈，会执行下面这个代码
-//     Api.shareToTimeline(wxData, wxCallbacks);
-
-//     // 点击分享到腾讯微博，会执行下面这个代码
-//     Api.shareToWeibo(wxData, wxCallbacks);
-
-//     // iOS上，可以直接调用这个API进行分享，一句话搞定
-//     Api.generalShare(wxData,wxCallbacks);
-
-// });
 

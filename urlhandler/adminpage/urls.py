@@ -30,4 +30,5 @@ urlpatterns = patterns('',
     url(r'^vote_export/(?P<voteid>\d+)/$', 'adminpage.views.vote_export'),
     url(r'^vote_statistics/(?P<voteid>\d+)/$', 'adminpage.views.vote_statistics'),
     url(r'^upload_pic/$', 'adminpage.views.upload_pic'),
+    url(r'^modify_pic/$', 'adminpage.views.modify_pic'),
 )

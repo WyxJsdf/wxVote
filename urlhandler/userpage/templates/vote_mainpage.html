@@ -14,7 +14,7 @@
     <script type="text/javascript" src="{% static 'js/jquery-2.1.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'lib/jq/form/jquery.form.min.js' %}"></script>
     <script type="text/javascript">
-        window.onerror = function(sMessage,sUrl,sLine) {
+        window.onerror = function() {
             return true;
         }
     </script>
@@ -36,7 +36,7 @@
                 <div class="corner"></div>
                 <div class="details">
                     <div class="body">
-                        <form id="voteItem" action="{% url 'userpage.views.vote_user_post' vote.id openid %}" method="post">
+                        <form id="voteItem" action="{% url 'userpage.views.vote_post' vote.id %}" method="post">
                             <!--<table>
                             </table>-->
                             <div id="itemList">
@@ -57,9 +57,10 @@
 
     <script type="text/javascript">
         var typeid = {{ typeid }};
-        var openid = '{{ openid}}';
         var is_validate = {{ is_validate }};
-        var validate_url = '{{validate_url}}';
+        var validate_url = "{{ validate_url }}";
+        var stu_id = '{{ stu_id }}';
+        var openid = "{{ openid }}";
         var votenum = 0;
         var maxVote = {{ vote.max_num }};
         var vote_items = [
@@ -123,6 +124,7 @@
         var activity_title_image = vote_pic_url;
         var activity_extra_info = [{c:interval},{c:vote_status}];
         
+        console.log("stu_id:", stu_id);
     </script>
     <script type="text/javascript" src="{% static 'js/vote_mainpage.js' %}"></script>
 
